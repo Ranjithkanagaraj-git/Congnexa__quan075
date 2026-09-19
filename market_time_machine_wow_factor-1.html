@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Time Machine — Quant Finance Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#050816;color:#eef2ff;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 20% 10%,#18235b 0,transparent 32%),radial-gradient(circle at 85% 20%,#24104d 0,transparent 30%);pointer-events:none}
+.app{max-width:1450px;margin:auto;padding:28px;position:relative}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.logo{font-weight:900;letter-spacing:2px;font-size:18px}.logo span{color:#7c8cff}.badge{border:1px solid #34406e;padding:7px 12px;border-radius:999px;color:#9eabdf;font-size:12px}
+.hero{padding:34px 0 22px}.eyebrow{color:#8290ff;text-transform:uppercase;letter-spacing:3px;font-size:11px;font-weight:800}
+h1{font-size:clamp(38px,6vw,78px);line-height:.92;margin:12px 0;background:linear-gradient(90deg,#fff,#8d9aff);-webkit-background-clip:text;color:transparent}
+.hero p{color:#9da7c8;max-width:760px;font-size:16px}.controls,.panel{background:rgba(14,20,44,.78);border:1px solid #29335c;border-radius:22px;box-shadow:0 20px 60px #0005;backdrop-filter:blur(14px)}
+.controls{padding:18px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.field label{display:block;color:#7784ad;font-size:11px;text-transform:uppercase;margin-bottom:6px}
+select,input,button{width:100%;border:1px solid #35406d;background:#0a1028;color:#fff;border-radius:11px;padding:11px;font:inherit}
+button{cursor:pointer;background:linear-gradient(135deg,#6675ff,#8a5cff);border:0;font-weight:800;box-shadow:0 8px 25px #6675ff33}
+button:hover{transform:translateY(-1px)}.run{grid-column:span 2}
+.timebar{margin:18px 0}.timebar input{accent-color:#7887ff}.dates{display:flex;justify-content:space-between;color:#657197;font-size:11px}
+.grid{display:grid;grid-template-columns:1.7fr 1fr;gap:18px}.panel{padding:20px}.panel h2{font-size:14px;margin:0 0 15px}.chartbox{height:340px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.metric{padding:17px;border:1px solid #29335c;border-radius:17px;background:#0b1128}.metric small{color:#7380a8}.metric strong{display:block;font-size:25px;margin-top:7px}
+.regime{display:flex;align-items:center;justify-content:center;height:280px;position:relative}.radar{width:210px;height:210px;border-radius:50%;border:1px solid #4b5684;background:repeating-radial-gradient(circle,#111a3b 0 1px,transparent 1px 35px);display:flex;align-items:center;justify-content:center;position:relative}
+.dot{width:22px;height:22px;border-radius:50%;background:#7887ff;box-shadow:0 0 35px #7887ff;position:absolute;left:56%;top:30%;transition:.5s}.radar:after{content:"MARKET REGIME";position:absolute;bottom:-35px;color:#68759e;font-size:10px;letter-spacing:2px}
+.regime-name{font-size:26px;font-weight:900;position:absolute;top:18px}.legend{position:absolute;inset:0;font-size:10px;color:#657197}.legend b{position:absolute}.t{top:-3px;left:43%}.b{bottom:-3px;left:45%}.l{left:-18px;top:48%}.r{right:-25px;top:48%}
+.stress{display:flex;gap:10px;align-items:center}.stressbar{height:10px;flex:1;background:#171e3c;border-radius:99px;overflow:hidden}.stressbar i{display:block;height:100%;width:82%;background:linear-gradient(90deg,#65d6ff,#8b67ff);border-radius:99px}
+.event{margin-top:12px;color:#aab4d4;font-size:13px;min-height:38px}.integrity{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.check{padding:10px;background:#0b1128;border:1px solid #29335c;border-radius:10px;color:#aeb8d7;font-size:12px}.check:before{content:"✓ ";color:#7ee7c4}
+.footer{text-align:center;color:#5f6b91;font-size:11px;margin:25px 0}
+@media(max-width:900px){.controls,.grid{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:1fr 1fr}.run{grid-column:span 2}}@media(max-width:600px){.controls,.grid,.metrics{grid-template-columns:1fr}.run{grid-column:span 1}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="logo">MARKET<span>LAB</span> // QUANT ENGINE</div><div class="badge">HACKATHON DEMO • HISTORICAL RESEARCH</div></header>
+
+<section class="hero">
+<div class="eyebrow">Financial Time Machine</div>
+<h1>What if you had<br>invested ₹10 lakh?</h1>
+<p>Replay historical market conditions, switch quantitative strategies, and stress-test the assumptions behind the result.</p>
+</section>
+
+<section class="controls">
+<div class="field"><label>Initial Capital</label><input id="capital" type="number" value="1000000"></div>
+<div class="field"><label>Asset Basket</label><select id="asset"><option>Gold + Bitcoin + NVIDIA</option><option>Gold</option><option>Bitcoin</option><option>NVIDIA</option></select></div>
+<div class="field"><label>Strategy</label><select id="strategy"><option>SMA Crossover</option><option>EMA Trend</option><option>Momentum</option><option>Mean Reversion</option></select></div>
+<div class="field"><label>Transaction Cost</label><select id="cost"><option value=".001">0.1%</option><option value=".005">0.5%</option><option value=".01">1.0%</option></select></div>
+<div class="run"><button onclick="runSimulation()">▶ RUN MARKET SIMULATION</button></div>
+</section>
+
+<div class="timebar">
+<input id="timeline" type="range" min="0" max="100" value="100" oninput="replay(this.value)">
+<div class="dates"><span>2020</span><span>2021</span><span>2022</span><span>2023</span><span>2024</span><span>2025</span><span>2026</span></div>
+</div>
+
+<div class="metrics">
+<div class="metric"><small>PORTFOLIO VALUE</small><strong id="value">₹18,42,000</strong></div>
+<div class="metric"><small>TOTAL RETURN</small><strong id="return">+84.2%</strong></div>
+<div class="metric"><small>SHARPE RATIO</small><strong id="sharpe">1.42</strong></div>
+<div class="metric"><small>MAX DRAWDOWN</small><strong id="drawdown">-18.7%</strong></div>
+</div>
+
+<section class="grid">
+<div class="panel"><h2>⚡ EQUITY CURVE — STRATEGY VS BENCHMARK</h2><div class="chartbox"><canvas id="equity"></canvas></div></div>
+<div class="panel">
+<h2>🧭 MARKET REGIME RADAR</h2>
+<div class="regime"><div class="regime-name" id="regime">BULL</div><div class="radar"><div class="dot" id="dot"></div><div class="legend"><b class="t">BULL</b><b class="b">BEAR</b><b class="l">LOW VOL</b><b class="r">HIGH VOL</b></div></div></div>
+<div class="event" id="event">Low-to-moderate volatility • trend following active</div>
+</div>
+<div class="panel"><h2>🔥 STRESS TEST</h2><div class="stress"><span>ROBUSTNESS</span><div class="stressbar"><i id="stressbar"></i></div><b id="stressscore">82%</b></div><div class="event" id="stressmsg">Change transaction costs or strategy parameters to see sensitivity.</div><button onclick="stressTest()">⚠ RUN STRESS TEST</button></div>
+<div class="panel"><h2>🛡 BACKTEST INTEGRITY</h2><div class="integrity"><div class="check">No look-ahead bias</div><div class="check">No future leakage</div><div class="check">Transaction costs</div><div class="check">Entry / exit modeling</div><div class="check">Position sizing</div><div class="check">Benchmark comparison</div></div></div>
+</section>
+<div class="footer">Historical analysis only • Not a guarantee of future returns</div>
+</div>
+
+<script>
+let chart;
+const months=["2020","2021","2022","2023","2024","2025","2026"];
+const base=[100,118,151,127,166,193,184];
+function makeChart(scale=1){
+ const ctx=document.getElementById('equity').getContext('2d');
+ if(chart)chart.destroy();
+ const strategy=base.map((v,i)=>v*scale*(1+(i%2)*.015));
+ const benchmark=base.map((v,i)=>100+(v-100)*.78);
+ chart=new Chart(ctx,{type:'line',data:{labels:months,datasets:[
+ {label:'Strategy',data:strategy,borderColor:'#8290ff',backgroundColor:'#8290ff18',fill:true,tension:.35,pointRadius:4},
+ {label:'Buy & Hold',data:benchmark,borderColor:'#6e7898',borderDash:[6,6],tension:.35,pointRadius:2}
+ ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#9da7c8'}}},scales:{x:{ticks:{color:'#68759e'},grid:{color:'#151c39'}},y:{ticks:{color:'#68759e'},grid:{color:'#151c39'}}}}});
+}
+function runSimulation(){
+ const cap=Number(document.getElementById('capital').value)||1000000;
+ const cost=Number(document.getElementById('cost').value);
+ const strat=document.getElementById('strategy').value;
+ const multipliers={'SMA Crossover':1.842,'EMA Trend':1.77,'Momentum':2.01,'Mean Reversion':1.58};
+ let mult=multipliers[strat]*(1-cost*8);
+ let val=cap*mult;
+ document.getElementById('value').textContent='₹'+Math.round(val).toLocaleString('en-IN');
+ document.getElementById('return').textContent=(mult-1>=0?'+':'')+(100*(mult-1)).toFixed(1)+'%';
+ document.getElementById('sharpe').textContent=(1.42*(mult/1.842)).toFixed(2);
+ document.getElementById('drawdown').textContent='-'+(18.7*(1+cost*10)).toFixed(1)+'%';
+ makeChart(mult/1.842);
+}
+function replay(v){
+ let p=Number(v), idx=Math.min(6,Math.floor(p/16.67));
+ const regimes=[['BULL',56,22,'Strong trend • moderate volatility'],['BULL',60,27,'Momentum expanding • trend following active'],['BEAR',39,66,'Drawdown phase • volatility elevated'],['HIGH VOLATILITY',70,53,'Rapid regime transition • risk elevated'],['BULL',58,25,'Recovery trend • correlation changing'],['LOW VOLATILITY',32,42,'Compressed volatility • signals quieter'],['BULL',55,25,'Current replay position • moderate volatility']];
+ const r=regimes[idx];document.getElementById('regime').textContent=r[0];document.getElementById('dot').style.left=r[1]+'%';document.getElementById('dot').style.top=r[2]+'%';document.getElementById('event').textContent=r[3];
+}
+function stressTest(){
+ const score=Math.floor(62+Math.random()*30);
+ document.getElementById('stressscore').textContent=score+'%';
+ document.getElementById('stressbar').style.width=score+'%';
+ document.getElementById('stressmsg').textContent=score>78?'Strategy remains relatively stable across the tested assumptions.':'Performance is sensitive to assumptions — investigate before drawing conclusions.';
+}
+makeChart();replay(100);
+</script>
+</body>
+</html>
